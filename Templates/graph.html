@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Commodity Price Plotter</title>
+    <link rel="icon" href="/static/main/img/favicon.ico">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"
+            integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+            crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+            crossorigin="anonymous"></script>
+    <link rel="stylesheet" type="text/css" media="screen"
+          href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.9.3/css/bootstrap-select.min.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.9.3/js/bootstrap-select.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-validator/0.5.3/js/bootstrapValidator.js"></script>
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300,600,700,900' rel='stylesheet'
+          type='text/css'>
+    <style type="text/css">
+        .formlabel {
+            font-weight: inherit;
+            color: #91baff;
+        }
+
+        .loading {
+            position: fixed;
+            left: 0px;
+            top: 0px;
+            opacity: 0.4;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            background: url('/static/ajax-loader.gif') center no-repeat #fff;
+        }
+
+        .forminput {
+            color: black;
+            font-size: 120%;
+            text-indent: 5px;
+            background-color: white;
+            border: 1px solid #ccc;
+            -moz-border-radius: 27px;
+            -webkit-border-radius: 27px;
+            border-radius: 27px;
+            width: 30%;
+            height: 25px;
+
+        }
+
+        #mainform {
+            padding-bottom: 20px; /* Height of the footer element */
+        }
+
+        td {
+            padding: 0px;
+        }
+
+        .buttondiv {
+            padding: 20px;
+        }
+
+        #divbg {
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://s22.postimg.org/v7pbtnwi9/ABA_waterlevel_small.jpg') no-repeat center center fixed;
+            -webkit-background-size: cover;
+            -moz-background-size: cover;
+            -o-background-size: cover;
+            background-size: cover;
+        }
+
+        #formbody, #mapbody, {
+            background-color: white;
+            border-radius: 50px;
+
+        }
+
+        #footer {
+            background-color: #292728;
+            width: 100%;
+            height: 100px;
+            position: fixed;
+            left: 0%;
+            right: 0%;
+            text-align: center;
+        }
+
+        tr {
+            border-left: solid #eee;
+            border-right: solid #eee;
+        }
+
+        h1 {
+            color: #BFD730;
+            font-size: 250%;
+        }
+
+        .shadow {
+            background: rgba(17, 17, 17, 0.0067) none repeat scroll 0% 0%;
+            box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1), 0px 6px 20px 0px rgba(0, 0, 0, 0.19);
+        }
+
+        #snackbar {
+            visibility: hidden; /* Hidden by default. Visible on click */
+            min-width: 250px; /* Set a default minimum width */
+            margin-left: -125px; /* Divide value of min-width by 2 */
+            background-color: #333; /* Black background color */
+            color: #fff; /* White text color */
+            text-align: center; /* Centered text */
+            border-radius: 2px; /* Rounded borders */
+            padding: 16px; /* Padding */
+            position: fixed; /* Sit on top of the screen */
+            z-index: 1; /* Add a z-index if needed */
+            left: 50%; /* Center the snackbar */
+            bottom: 30px; /* 30px from the bottom */
+        }
+
+        /* Show the snackbar when clicking on a button (class added with JavaScript) */
+        #snackbar.show {
+            visibility: visible; /* Show the snackbar */
+
+            /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
+            However, delay the fade out process for 2.5 seconds */
+            -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+
+        /* Animations to fade the snackbar in and out */
+        @-webkit-keyframes fadein {
+            from {
+                bottom: 0;
+                opacity: 0;
+            }
+            to {
+                bottom: 30px;
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadein {
+            from {
+                bottom: 0;
+                opacity: 0;
+            }
+            to {
+                bottom: 30px;
+                opacity: 1;
+            }
+        }
+
+        @-webkit-keyframes fadeout {
+            from {
+                bottom: 30px;
+                opacity: 1;
+            }
+            to {
+                bottom: 0;
+                opacity: 0;
+            }
+        }
+
+        @keyframes fadeout {
+            from {
+                bottom: 30px;
+                opacity: 1;
+            }
+            to {
+                bottom: 0;
+                opacity: 0;
+            }
+        }
+
+        #mapbody .ct-bar {
+            stroke-width: 40px
+        }
+    </style>
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
+    <script src="/static/chartist.js"></script>
+    <script src="http://underscorejs.org/underscore-min.js"></script>
+    {#    <link rel="stylesheet"#}
+    {#          href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/css/bootstrap-datepicker.css"/>#}
+    {#    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/js/bootstrap-datepicker.js"></script>#}
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css">
+    <script src="//code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+</head>
+<body>
+<div class="loading"></div>
+<!-- Logo -->
+<div class="container-fluid">
+    <div class="row" style="padding:20px;">
+        <div class="col-sm-4 text-center">
+            <a href="http://www.ssiaeration.com">
+                <img src="http://ssiaerations.appspot.com/static/main/img/ssilogo.png" height="70">
+            </a>
+        </div>
+    </div>
+    <div id="divbg"
+         style="padding:20px;background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://s22.postimg.org/v7pbtnwi9/ABA_waterlevel_small.jpg') no-repeat center center fixed; background-size: 100% 100% ">
+        <div class="container" style="padding:20px;border-radius: 5px;background: white;" id="formbody">
+            <div class="row" class="form-fill">
+                <div class="col-lg-12" style="padding: 20px;">
+                    <h1 class="" style="padding-left: 20px"><b>SSI Commodity Price Plotter</b></h1>
+                    <hr>
+                    <!-- FORM HERE -->
+                    <form name="form_submit" value="Submit" id="form1" method="POST">
+                        <div id="mainform">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="formlabel pull-right" for="choice_label">
+                                        Commodity (ABS, PVC, EPDM, etc..)
+                                    </label>
+                                </div>
+                                <div class="col-md-5">
+                                    <input name="commodity" id="commodity"
+                                           placeholder="Commodity Name"
+                                           type="text" value=""
+                                           class="form-control"
+                                           aria-required="true"
+                                           aria-invalid="false">
+                                </div>
+                                <div class="col-md-3"></div>
+                            </div>
+                            <br>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="formlabel pull-right" for="choice_label">
+                                        Product Name/Model (DiscDiffusers, AFT Series,etc..)</label>
+                                </div>
+                                <div class="col-md-5">
+                                    <input name="product" id="product"
+                                           placeholder="Product Name"
+                                           type="text" value=""
+                                           class="form-control"
+                                           aria-required="true"
+                                           aria-invalid="false">
+                                </div>
+                                <div class="col-md-3"></div>
+                            </div>
+                            <br>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="formlabel pull-right" for="do_label">Unit (i.e. Kg, Pc, Lb,
+                                        Ton)</label>
+                                </div>
+
+                                <div class="col-md-5">
+                                    <input name="unit" id="unit"
+                                           placeholder="Unit Name"
+                                           type="text" value=""
+                                           class="form-control"
+                                           aria-required="true"
+                                           aria-invalid="false">
+                                </div>
+                                <div class="col-md-3"></div>
+                            </div>
+                            <br>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="formlabel pull-right" for="do_label">Original Currency</label>
+                                </div>
+                                <div class="col-md-5">
+                                    <select name="currencya" id="currencya" type="text" default="KRW"
+                                            class="form-control"
+                                            aria-required="true" aria-invalid="false">
+                                        <option value="">Select Currency</option>
+                                        <option value="AUD">Australian Dollar</option>
+                                        <option value="BRL">Brazilian Real</option>
+                                        <option value="CAD">Canadian Dollar</option>
+                                        <option value="CZK">Czech Koruna</option>
+                                        <option value="DKK">Danish Krone</option>
+                                        <option value="EUR">Euro</option>
+                                        <option value="HKD">Hong Kong Dollar</option>
+                                        <option value="HUF">Hungarian Forint</option>
+                                        <option value="ILS">Israeli New Sheqel</option>
+                                        <option value="JPY">Japanese Yen</option>
+                                        <option value="KRW" selected>Korean Won</option>
+                                        <option value="MYR">Malaysian Ringgit</option>
+                                        <option value="MXN">Mexican Peso</option>
+                                        <option value="NOK">Norwegian Krone</option>
+                                        <option value="NZD">New Zealand Dollar</option>
+                                        <option value="PHP">Philippine Peso</option>
+                                        <option value="PLN">Polish Zloty</option>
+                                        <option value="GBP">UK Pound Sterling</option>
+                                        <option value="SGD">Singapore Dollar</option>
+                                        <option value="SEK">Swedish Krona</option>
+                                        <option value="CHF">Swiss Franc</option>
+                                        <option value="TWD">Taiwan New Dollar</option>
+                                        <option value="THB">Thai Baht</option>
+                                        <option value="TRY">Turkish Lira</option>
+                                        <option value="USD">U.S. Dollar</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3">
+                                </div>
+                            </div>
+                            <br>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="formlabel pull-right" for="do_label">Output Currency</label>
+                                </div>
+
+                                <div class="col-md-5">
+                                    <select name="currencyb" id="currencyb" type="text" default="USD"
+                                            class="form-control"
+                                            value="USD" aria-required="true" aria-invalid="false">
+                                        <option value="">Select Currency</option>
+                                        <option value="AUD">Australian Dollar</option>
+                                        <option value="BRL">Brazilian Real</option>
+                                        <option value="CAD">Canadian Dollar</option>
+                                        <option value="CZK">Czech Koruna</option>
+                                        <option value="DKK">Danish Krone</option>
+                                        <option value="EUR">Euro</option>
+                                        <option value="HKD">Hong Kong Dollar</option>
+                                        <option value="HUF">Hungarian Forint</option>
+                                        <option value="ILS">Israeli New Sheqel</option>
+                                        <option value="JPY">Japanese Yen</option>
+                                        <option value="KRW">Korean Won</option>
+                                        <option value="MYR">Malaysian Ringgit</option>
+                                        <option value="MXN">Mexican Peso</option>
+                                        <option value="NOK">Norwegian Krone</option>
+                                        <option value="NZD">New Zealand Dollar</option>
+                                        <option value="PHP">Philippine Peso</option>
+                                        <option value="PLN">Polish Zloty</option>
+                                        <option value="GBP">UK Pound Sterling</option>
+                                        <option value="SGD">Singapore Dollar</option>
+                                        <option value="SEK">Swedish Krona</option>
+                                        <option value="CHF">Swiss Franc</option>
+                                        <option value="TWD">Taiwan New Dollar</option>
+                                        <option value="THB">Thai Baht</option>
+                                        <option value="TRY">Turkish Lira</option>
+                                        <option value="USD" selected>U.S. Dollar</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3">
+                                </div>
+                            </div>
+                            <br>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="formlabel pull-right" for="do_label">Graph Type</label>
+                                </div>
+                                <div class="col-md-5">
+                                    <select name="chart-type" id="chart-type" type="text" default="false"
+                                            class="form-control" value="false" aria-required="true"
+                                            aria-invalid="false">
+                                        <option value="false" selected>Dot</option>
+                                        <option value="true">Line</option>
+                                        <option value="bar">Bar</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3">
+                                </div>
+                            </div>
+                            <br>
+                        </div>
+                        <br>
+
+                        <div id="wrapper" class="col-md-offset-1 col-md-10 col-md-offset-1">
+                            <table class="table table-responsive table-bordered">
+                                <thead>
+                                <tr>
+                                    <th>
+                                        Date
+                                    </th>
+                                    <th>
+                                        Price (Original)
+                                    </th>
+                                    <th>
+
+                                    </th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr class="roww">
+                                    <td>
+                                        <input class="date-input form-control datepickerr" required
+                                               placeholder="Select Date" value=""/>
+                                    </td>
+                                    <td>
+                                        <input class="price-input form-control" type="number" required
+                                               placeholder="Enter Price"/>
+                                    </td>
+                                    <td class="text-center"><a href="#!" class="glyphicon glyphicon-remove"></a></td>
+                                </tr>
+                                <tr class="roww">
+                                    <td><a class="clone glyphicon glyphicon-plus" href="#!"></a></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <div class="form-group">
+                                <label class="col-md-4 control-label" for="singlebutton"></label>
+
+                                <div>
+                                    <input type="submit" class="btn btn-success pull-right" value="Submit">
+                                </div>
+                                <span></span></div>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-lg-12" style="display: none">
+                    <div class="row " id="" style="background: transparent;">
+                        <div class="col-lg-3 text-center pull-right">
+                            <img src="http://ssiaerations.appspot.com/static/main/img/ssilogo.png">
+                            <h4>4 Tucker Drive <br> Poughkeepsie, NY 12603 USA<br>
+                                +1-845-454-8171
+                                <br> <a href="mailto:info@ssiaeration.com?Subject=sor%20Form">info@ssiaeration.com </a>
+                            </h4>
+                        </div>
+                        <div class="col-lg-3 text-center">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mapbody" id="mapparent"
+             style="display: none;padding:30px;border-radius: 5px;background: white;">
+            <h1 id="product-title" class="pull-left"
+                style="color: #BFD730;text-transform: capitalize;width: 100%;margin-top: 0px;border-bottom: solid #5432 0.5px;padding-bottom: 20px">
+            </h1>
+
+            <div id="example-plugin-zoom" class="chart"></div>
+            <div class="row" style="width: 100%;height: 100%" id="mapbody">
+            </div>
+        </div>
+    </div>
+</div>
+<div id="snackbar"></div>
+</body>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('.loading').fadeOut()
+        {#        $('.datepicker').datepicker();#}
+    });
+    res = []
+    $('#form1').submit(function (e) {
+        e.preventDefault()
+        {#        $('#mapbody').css({"padding-bottom": "100px"})#}
+        if ($('tbody>tr').length < 2) {
+            snackit('Please Enter Atleast Two Dates')
+        } else {
+            $('.loading').fadeIn()
+            zipped = []
+            zipped_new = []
+            $(".date-input").each(function (index) {
+                zipped.push([$(this).val(), $(this).parent().next().children().first().val()])
+            });
+            function months_between(date1, date2) {
+                return date2.getMonth() - date1.getMonth() + (12 * (date2.getFullYear() - date1.getFullYear()));
+            }
+
+            ind = []
+            zipped.forEach(function (list, a) {
+                if (a != zipped.length - 1) {
+                    b = parseInt(a) + 1
+                    var diff = months_between(new Date(list[0]), new Date(zipped[b][0]))
+                    {#                diff = diff + 1#}
+                    if (diff > 1) {
+                        zipped_new.push(list)
+                        dt = new Date(list[0])
+                        day = dt.getDate()
+                        month = dt.getMonth() + 1
+                        year = dt.getFullYear()
+                        for (i = 1; i < diff; i++) {
+                            if (month == 12) {
+                                month = 01
+                                year = year + 1
+                                day = 01
+                            } else {
+                                month = month + 1
+                            }
+                            yo = (month < 10) ? '0' + month.toString() : month.toString()
+                            yoo = (day < 10) ? '0' + day.toString() : day.toString()
+                            indx = zipped_new.push([year + "-" + yo + "-" + yoo, zipped[a][1]])
+                            ind.push(indx - 1)
+                            b = b + 1
+                        }
+                    }
+                    else {
+                        zipped_new.push(list)
+                    }
+                }
+            })
+            zipped_new.push(zipped[zipped.length - 1])
+            $.post("{{url_for ("process_data")}}", {
+                'prices': JSON.stringify(zipped_new),
+                'currencya': $('#currencya').val(),
+                'currencyb': $('#currencyb').val()
+            }, function (result) {
+                result = JSON.parse(result)
+                $('#formbody').hide()
+                $('.mapbody').show()
+                if ($('#chart-type').val() == 'bar') {
+                    bar_dates = []
+                    bar_prices = []
+                    for (a in result) {
+                        bar_dates.push(new Date(result[a][0]))
+                        bar_prices.push(result[a][1])
+                    }
+                    var data = {
+                        labels: bar_dates,
+                        series: [
+                            bar_prices
+                        ]
+                    };
+                    var options = {
+                        width: '100%',
+                        height: '300px',
+                        seriesBarDistance: 5,
+                        axisX: {
+                            labelInterpolationFnc: function (value) {
+                                return moment(value).format('MMM D Y');
+                            }
+                        },
+                        plugins: [
+                            Chartist.plugins.ctAxisTitle({
+                                axisX: {
+                                    axisTitle: 'Price Change over TIME',
+                                    axisClass: 'ct-axis-title',
+                                    offset: {
+                                        x: 0,
+                                        y: 30
+                                    },
+                                    textAnchor: 'middle'
+                                },
+                                axisY: {
+                                    axisTitle: $("#currencyb option:selected").text() + ' (' + $("#currencyb option:selected").val() + ')',
+                                    axisClass: 'ct-axis-title',
+                                    offset: {
+                                        x: 0,
+                                        y: -1
+                                    },
+                                    textAnchor: 'middle'
+                                }
+                            })
+
+                        ]
+                    };
+                    var responsiveOptions = [
+                        ['screen and (max-width: 640px)', {
+                            seriesBarDistance: 5,
+                        }]
+                    ];
+                    new Chartist.Bar('#mapbody', data, options, responsiveOptions);
+                    if (window.btn) {
+                        delete btn
+                    }
+                } else {
+                    plots = []
+                    for (a in result) {
+                        plots.push({x: new Date(result[a][0]), y: result[a][1]})
+                    }
+                    var chart = new Chartist.Line('#mapbody', {
+                        series: [
+                            {
+                                name: 'series-1',
+                                data: plots
+                            }
+                        ]
+                    }, {
+                        width: '100%',
+                        height: '300px',
+                        showLine: eval($('#chart-type').val()),
+                        axisX: {
+                            type: Chartist.AutoScaleAxis,
+                            divisor: 5,
+                            labelInterpolationFnc: function (value) {
+                                return moment(value).format('MMM D Y');
+                            }
+                        },
+                        axisY: {
+                            axisTitle: 'Time (mins)',
+                            type: Chartist.AutoScaleAxis
+                        },
+                        plugins: [
+                            Chartist.plugins.zoom({onZoom: onZoom}),
+                            Chartist.plugins.ctAxisTitle({
+                                axisX: {
+                                    axisTitle: 'Price Change over TIME',
+                                    axisClass: 'ct-axis-title',
+                                    offset: {
+                                        x: 0,
+                                        y: 35
+                                    },
+                                    textAnchor: 'middle'
+                                },
+                                axisY: {
+                                    axisTitle: $("#currencyb option:selected").text() + ' (' + $("#currencyb option:selected").val() + ')',
+                                    axisClass: 'ct-axis-title',
+                                    offset: {
+                                        x: 0,
+                                        y: -1
+                                    },
+                                    textAnchor: 'middle'
+                                }
+                            })
+
+                        ]
+                    });
+                    var resetFnc;
+
+                    function onZoom(chart, reset) {
+                        resetFnc = reset;
+                        ok()
+                    }
+
+                    btn = document.createElement('button');
+                    btn.id = 'reset-zoom-btn';
+                    btn.innerHTML = 'Reset Zoom';
+                    btn.style.float = 'right';
+                    btn.style.marginLeft = '10px';
+                    btn.classList = 'btn btn-info'
+                    btn.addEventListener('click', function () {
+                        resetFnc && resetFnc();
+                        ok()
+                    });
+                }
+                var btn2 = document.createElement('a');
+                btn2.href = '#!';
+                btn2.style.float = 'right';
+                btn2.textContent = 'Back'
+                btn2.classList = 'btn btn-default'
+                btn2.addEventListener('click', function () {
+                    $('#formbody').show()
+                    $('.mapbody').hide()
+                });
+                $('#example-plugin-zoom').html('')
+                $('#product-title').text($('#product').val())
+                if (window.btn) {
+                    $('#example-plugin-zoom').append(btn)
+                }
+                $('#example-plugin-zoom').append(btn2)
+                setTimeout(function () {
+                    ok()
+                }, 2000);
+                res = result
+                one = result[0][1]
+                two = result[result.length - 1][1]
+                change = two - one
+                change_percentage = (change / one) * 100
+                one = moment(new Date(result[0][0])).format('MMM D Y');
+                two = moment(new Date(result[result.length - 1][0])).format('MMM D Y');
+                var h3 = document.createElement('h5');
+                h3.id = 'percentage-change';
+                h3.innerHTML = 'From ' + one + ' to ' + two + ' the price in ' + $("#currencyb").val() + ' is changed by ' + change_percentage.toFixed(2) + '%';
+                h3.classList = 'pull-left'
+                h3.style.color = '#d70206'
+                h3.style.width = '100%'
+                $('#example-plugin-zoom').append(h3)
+                one = zipped[0][1]
+                two = zipped[zipped.length - 1][1]
+                change = two - one
+                change_percentage = (change / one) * 100
+                one = moment(new Date(zipped[0][0])).format('MMM D Y');
+                two = moment(new Date(zipped[zipped.length - 1][0])).format('MMM D Y');
+                var h3 = document.createElement('h5');
+                h3.id = 'percentage-change-two';
+                h3.innerHTML = 'From ' + one + ' to ' + two + ' the price in ' + $("#currencya").val() + ' is changed by ' + change_percentage.toFixed(2) + '%';
+                h3.classList = 'pull-left'
+                h3.style.color = 'silver'
+                h3.style.width = '100%'
+                $('#example-plugin-zoom').append(h3)
+                window.location = '#mapparent'
+            }).done(function () {
+                $('.loading').fadeOut()
+            });
+        }
+    });
+    function ok() {
+        ind.forEach(function (i, ind) {
+            valu = res[i]
+            lines = $("line.ct-point")
+            lines.each(function (a, b) {
+                att_val = $(this).attr('ct:value')
+                att_val = att_val.split(',')[1]
+                if (parseFloat(valu[1]) == parseFloat(att_val) && i == a) {
+                    $(this).css({"stroke": "black", "stroke-width": "5px"})
+                }
+            })
+        })
+        {#        $('#mapbody').css({"padding-bottom": "0px"})#}
+    }
+    $('body').on('click', '.datepickerr', function () {
+        if ($('tbody > tr.roww').length == 2 && $(this).is($('tbody > tr > td:first').children().first())) {
+            if (!$(this).hasClass('hasDatepicker')) {
+                $(this).datepicker({
+                    dateFormat: 'yy-mm-dd',
+                    maxDate: '+0d',
+                    minDate: '2016-05-01',
+                }).focus()
+            }
+        }
+        else if ($(this).is($('tbody > tr > td:first').children().first()) && $('tbody > tr.roww').length > 2) {
+            if (!$(this).hasClass('hasDatepicker')) {
+                $(this).attr('id', '')
+                $(this).removeClass('hasDatepicker')
+                dt1 = new Date($(this).parent().parent().next().find('.datepickerr').val())
+                dt1.setDate(dt1.getDate() - 1)
+                valu = moment(dt1).format('YYYY-MM-DD')
+                $(this).datepicker({
+                    dateFormat: 'yy-mm-dd',
+                    maxDate: dt1,
+                    minDate: '1990-05-01',
+                    defaultDate: dt1
+                }).focus()
+            }
+            else {
+                dt1 = new Date($(this).parent().parent().next().find('.datepickerr').val())
+                dt1.setDate(dt1.getDate() - 1)
+                valu = moment(dt1).format('YYYY-MM-DD')
+                $(this).val(valu)
+            }
+        }
+        else if ($(this).is($('tbody > tr.roww:last').prev().find('.datepickerr'))) {
+            if (!$(this).hasClass('hasDatepicker')) {
+                $(this).attr('id', '')
+                $(this).removeClass('hasDatepicker')
+                $(this).datepicker({
+                    dateFormat: 'yy-mm-dd',
+                    maxDate: '+0d',
+                    minDate: '2016-05-01',
+                }).focus()
+            }
+        }
+        else {
+            if (!$(this).hasClass('hasDatepicker')) {
+                $(this).attr('id', '')
+                $(this).removeClass('hasDatepicker')
+                $(this).datepicker({
+                    dateFormat: 'yy-mm-dd',
+                    maxDate: dt1,
+                    minDate: '2016-05-01',
+                    defaultDate: dt1
+                }).focus()
+            }
+            else {
+                dt1 = new Date($(this).parent().parent().next().find('.datepickerr').val())
+                dt1.setDate(dt1.getDate() - 1)
+                valu = moment(dt1).format('YYYY-MM-DD')
+                $(this).val(valu)
+            }
+        }
+    })
+    $('.clone').on('click', function (e) {
+        e.preventDefault()
+        cloned = $(this).parent().parent().siblings().first().clone()
+        console.log(cloned)
+        if (cloned.find('.datepickerr').val()) {
+            $(this).parent().parent().siblings().first().before(cloned)
+            cloned.find('.datepickerr').attr('id', '')
+            cloned.find('.datepickerr').removeClass('hasDatepicker')
+            dt1 = new Date(cloned.find('.datepickerr').val())
+            cloned.find('.datepickerr').val('')
+            dt1.setDate(dt1.getDate() - 1)
+            valu = moment(dt1).format('YYYY-MM-DD')
+            cloned.find('.datepickerr').val(valu)
+            {#            cloned.find('.datepicker').datepicker({#}
+            {#                dateFormat: 'yy-mm-dd',#}
+            {#                maxDate: dt1,#}
+            {#                minDate: '2016-05-01',#}
+            {#                defaultDate: dt1#}
+            {#            }).val(valu)#}
+        }
+        else {
+            snackit('Please Enter Date')
+        }
+    })
+    $('body').on('click', '.glyphicon-remove', function (e) {
+        e.preventDefault()
+        if ($('tbody>tr.roww').length > 3) {
+            $(this).parent().parent().remove()
+        }
+    });
+    {#    datee = new Date()#}
+    {#    datee = moment(datee).format('YYYY-MM-DD')#}
+    {#    $('.datepicker').datepicker({#}
+    {#        dateFormat: "yy-mm-dd",#}
+    {#        defaultDate: '+0d',#}
+    {#        maxDate: "+0d",#}
+    {#        minDate: new Date('2016-05-01')#}
+    {#    })#}
+    function snackit(message) {
+        // Get the snackbar DIV
+        $("#snackbar").text(message)
+        // Add the "show" class to DIV
+        $("#snackbar").addClass('show')
+
+        // After 3 seconds, remove the show class from DIV
+        setTimeout(function () {
+            $("#snackbar").removeClass('show')
+        }, 3000);
+    }
+</script>
+</html>
